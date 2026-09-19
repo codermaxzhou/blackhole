@@ -304,6 +304,7 @@ body.fallback-bg {
   background: rgba(0, 0, 0, 0.82);
   backdrop-filter: blur(6px);
 }
+#error-card[hidden] { display: none; }
 .error-box {
   max-width: 460px;
   text-align: center;
