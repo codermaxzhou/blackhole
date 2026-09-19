@@ -20,7 +20,11 @@ uniform float uThresh;
 void main() {
   vec4 t = texture(uTex, vUv);
   float l = dot(t.rgb, vec3(0.2126, 0.7152, 0.0722));
-  float w = smoothstep(uThresh, uThresh + 0.6, l);
+  // Soft-knee extraction blooms only the excess energy, retaining surface detail.
+  float knee = max(0.5 * uThresh, 0.001);
+  float soft = clamp(l - uThresh + knee, 0.0, 2.0 * knee);
+  soft = soft * soft / (4.0 * knee);
+  float w = max(l - uThresh, soft) / max(l, 0.00001);
   fragColor = vec4(t.rgb * w, 1.0);
 }
 `;
@@ -65,7 +69,7 @@ float h13(vec3 p) {
 
 vec3 aces(vec3 x) {
   const float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
-  return clamp((x * (a * x + b)) / (x * (c * x + d)) + e, 0.0, 1.0);
+  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
 void main() {
@@ -74,30 +78,32 @@ void main() {
   float aspect = uRes.x / max(uRes.y, 1.0);
 
   // subtle chromatic aberration (radial)
-  vec2 off = cxy * 0.0026 * (0.55 + 2.4 * r2);
+  vec2 off = cxy * (0.35 / uRes) * (0.55 + 2.4 * r2);
   vec3 col;
   col.r = texture(uScene, vUv - off).r;
   col.g = texture(uScene, vUv).g;
   col.b = texture(uScene, vUv + off).b;
 
-  col *= uExposure;
-
   vec3 bloom = texture(uBloomA, vUv).rgb;
   if (uCine > 0.5) {
-    bloom += texture(uBloomE, vUv).rgb * 0.9;
+    bloom += texture(uBloomE, vUv).rgb * 0.4;
   }
-  col += bloom * uBloomStr;
+  col += bloom * uBloomStr * 0.35;
 
-  col = aces(col);
+  col = aces(max(col * uExposure, vec3(0.0)));
 
   // vignette
   float vlen = length(cxy * vec2(aspect, 1.0));
   float vig = 1.0 - uVignette * smoothstep(0.40, 0.98, vlen);
   col *= vig;
 
+  // RawShaderMaterial requires an explicit linear-to-sRGB output transform.
+  col = mix(12.92 * col, 1.055 * pow(col, vec3(1.0 / 2.4)) - 0.055,
+            step(vec3(0.0031308), col));
+
   // film grain (luminance-scaled, temporal)
   float gn = h13(vec3(gl_FragCoord.xy, fract(uTime) * 131.0)) - 0.5;
-  col += gn * uGrain * (0.35 + 0.65 * dot(col, vec3(0.3333)));
+  col += gn * uGrain * 0.25 * dot(col, vec3(0.3333));
 
   // banding-kill dither
   col += (h13(vec3(gl_FragCoord.xy, 7.7)) - 0.5) * (1.6 / 255.0);

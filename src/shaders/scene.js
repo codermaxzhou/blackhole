@@ -58,7 +58,7 @@ uniform float uDust;
 #define R_HORIZON_HIT 1.0045
 #define R_ESC 26.0
 #define SIGMA_CUT 7.5
-#define EMIT_SCALE 0.065
+#define EMIT_SCALE 0.028
 #define MAX_STEPS @@MAX_STEPS@@
 #define STEP_A @@STEP_A@@
 
@@ -70,12 +70,10 @@ float h13(vec3 p) {
 }
 
 vec3 h33(vec3 p) {
-  p = vec3(
-    dot(p, vec3(127.1, 269.5, 113.5)),
-    dot(p, vec3(269.5, 183.3, 271.9)),
-    dot(p, vec3(113.5, 271.9, 183.3))
-  ) * 0.017 + 0.71;
-  p = fract(p) + dot(p, p.xyx + 19.19);
+  // Keep every intermediate bounded: large cell coordinates otherwise lose
+  // their fractional bits in float32 and turn whole regions into stars.
+  p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+  p += dot(p, p.yxz + 33.33);
   return fract((p.xxy + p.yxx) * p.zyx);
 }
 
@@ -148,7 +146,9 @@ vec3 blackbody(float T) {
     g = 288.1221695283 * pow(t - 10.0, -0.0755148492);
     b = 255.0;
   }
-  return clamp(vec3(r, g, b) / 255.0, 0.0, 1.0);
+  vec3 srgb = clamp(vec3(r, g, b) / 255.0, 0.0, 1.0);
+  return mix(srgb / 12.92, pow((srgb + 0.055) / 1.055, vec3(2.4)),
+             step(vec3(0.04045), srgb));
 }
 
 vec3 rainbow(float t) {
@@ -156,13 +156,13 @@ vec3 rainbow(float t) {
 }
 
 // ---------------------------------------------------------------- background
-void addStars(vec3 d, out vec3 cO, float scale, float thresh, float amp, bool twinkle) {
+void addStars(vec3 d, inout vec3 cO, float scale, float thresh, float amp, bool twinkle) {
   vec3 g = floor(d * scale);
   vec3 h = h33(g);
   if (h.x < thresh) {
     vec3 f = fract(d * scale) - 0.5 - (h * 2.0 - 1.0) * 0.40;
     float r2 = dot(f, f);
-    float s = smoothstep(0.10, 0.015, r2) * (0.35 + 0.65 * h.z);
+    float s = (1.0 - smoothstep(0.015, 0.10, r2)) * (0.35 + 0.65 * h.z);
     vec3 tint = mix(vec3(1.0, 0.82, 0.60), vec3(0.62, 0.78, 1.0), h33(g + 31.7).x);
     float tw = 1.0;
     if (twinkle) {
@@ -206,10 +206,13 @@ vec3 background(vec3 d) {
   return c;
 }
 
+// Integrate each ray in its orbital plane, avoiding spherical pole singularities.
+vec3 orbitX, orbitY, orbitZ;
+
 // ---------------------------------------------------------------- geometry
 vec3 cart(float r, float th, float ph) {
   float s = sin(th);
-  return vec3(s * cos(ph), cos(th), s * sin(ph)) * r;
+  return (orbitX * (s * cos(ph)) + orbitY * cos(th) + orbitZ * (s * sin(ph))) * r;
 }
 
 vec3 cartVel(float r, float th, float ph, float rd, float thd, float phd) {
@@ -217,12 +220,13 @@ vec3 cartVel(float r, float th, float ph, float rd, float thd, float phd) {
   vec3 er  = vec3(s * cos(ph), cos(th), s * sin(ph));
   vec3 eTh = vec3(cos(th) * cos(ph), -s, cos(th) * sin(ph));
   vec3 ePh = vec3(-sin(ph), 0.0, cos(ph));
-  return rd * er + r * thd * eTh + r * s * phd * ePh;
+  vec3 v = rd * er + r * thd * eTh + r * s * phd * ePh;
+  return orbitX * v.x + orbitY * v.y + orbitZ * v.z;
 }
 
 // ---------------------------------------------------------------- geodesic
 // state: r, th, ph (position), rd, thd, phd (derivatives w.r.t. affine lambda)
-// conserved: E = 1, L2 = |L|^2, Lz = L.y
+// conserved: E = 1, L2 = |L|^2, Lz along the ray-local orbit normal
 void derive(float r, float th, float ph, float rd, float thd, float phd,
             out vec3 dp, out vec3 dv) {
   float s = sin(th);
@@ -297,10 +301,15 @@ float diskSample(vec3 mp, out float deltaOut, out float gGravOut, out vec3 emitO
   float omega = uDiskSwirl * 0.55 / sqrt(mR + 0.6);
   float psi = phiM - omega * uTime * (0.25 + 0.75 * uDiskTurbSpd) + prec;
 
-  vec3 tp = vec3(mR * 0.42, psi * mR, mp.y / max(H, 0.05) * 1.8);
-  float n1 = fbm3(tp + 0.6 * vec3(fbm3(tp * 1.8 + 4.2)));
-  float turb = 0.70 + 0.45 * uDiskTurb * (n1 * 2.0 - 1.0);
-  float hot = 0.88 + 0.24 * uDiskTurb * (fbm3(tp * 2.1 + 9.7) * 2.0 - 1.0);
+  // Periodic coordinates keep the flow continuous across atan's +/-pi seam.
+  vec3 tp = vec3(cos(psi), sin(psi), mp.y / max(H, 0.05)) * vec3(mR, mR, 1.4);
+  float n1 = fbm3(tp * 1.7);
+  float fine = fbm3(tp * 4.3 + 9.7);
+  // Sheared filaments reveal differential rotation without a flat painted disk.
+  float phase = mR * 15.0 + 6.0 * psi + 5.0 * n1;
+  float filament = 0.5 + 0.5 * sin(phase);
+  float turb = mix(1.0, 0.35 + 1.1 * n1 + 0.55 * filament, min(uDiskTurb, 2.0));
+  float hot = exp(uDiskTurb * (1.8 * (fine - 0.45) + 0.55 * (filament - 0.5)));
 
   float dens = vert * radial * max(turb, 0.04);
 
@@ -316,7 +325,9 @@ float diskSample(vec3 mp, out float deltaOut, out float gGravOut, out vec3 emitO
   float gEff = mix(1.0, gGrav, uRedshift);
   float Te = uDiskTemp * pow(uDiskRIn / max(mR, 1.2), 0.75);
   float Tobs = clamp(Te * gEff * dEff, 700.0, 90000.0);
-  vec3 col = blackbody(Tobs);
+  // Artistic visible-band temperature mapping; radiative intensity below
+  // continues to use the physical temperature and relativistic factors.
+  vec3 col = blackbody(Tobs * 0.32);
   float bol = pow(gEff * Te / 5800.0, 4.0);
   float boost = mix(1.0, pow(max(delta, 0.15), 4.0), uDoppler);
   float emis = pow(uDiskRIn / max(mR, 1.2), uDiskEmis);
@@ -332,7 +343,7 @@ float diskSample(vec3 mp, out float deltaOut, out float gGravOut, out vec3 emitO
 // ---------------------------------------------------------------- main
 void main() {
   vec2 frc = gl_FragCoord.xy;
-  vec2 uv = (frc - 0.5 * uRes) / uRes.y;
+  vec2 uv = 2.0 * (frc - 0.5 * uRes) / uRes.y;
   vec3 rd = normalize(uTanFov * (uv.x * uCamRight + uv.y * uCamUp) + uCamFwd);
 
   // -------- initial geodesic state from camera ray --------
@@ -344,24 +355,26 @@ void main() {
   vec3 p = uCamPos;
   float r0 = length(p);
   vec3 n0 = p / r0;
-  float c0 = dot(n0, rd);
-  float th0 = acos(clamp(n0.y, -1.0, 1.0));
-  float ph0 = atan(n0.z, n0.x);
-  float s0 = max(sin(th0), 1e-5);
+  orbitX = n0;
+  vec3 normal = cross(n0, rd);
+  if (dot(normal, normal) < 1e-12) {
+    normal = cross(n0, abs(n0.y) < 0.9 ? vec3(0, 1, 0) : vec3(1, 0, 0));
+  }
+  orbitY = normalize(normal);
+  orbitZ = cross(orbitX, orbitY);
+  float th0 = 1.57079632679;
+  float ph0 = 0.0;
+  float s0 = 1.0;
   float e0 = 1.0 - 1.0 / r0;
   float se0 = sqrt(max(e0, 1e-6));
-
-  vec3 eR = n0;
-  vec3 eTh = vec3(cos(th0) * cos(ph0), -sin(th0), cos(th0) * sin(ph0));
-  vec3 ePh = vec3(-sin(ph0), 0.0, cos(ph0));
-  float dr0 = dot(rd, eR);
-  float dth = dot(rd, eTh);
-  float dph = dot(rd, ePh);
+  float dr0 = dot(rd, n0);
+  float dth = 0.0;
+  float dph = dot(rd, orbitZ);
 
   float rd0 = dr0;
   float thd0 = dth / (r0 * se0);
   float phd0 = dph / (r0 * s0 * se0);
-  float L2 = r0 * r0 * (1.0 - dr0 * dr0) / e0;
+  float L2 = r0 * r0 * dph * dph / e0;
   float Lz = r0 * s0 * dph / se0;
 
   float r = r0, th = th0, ph = ph0, rdv = rd0, thdv = thd0, phdv = phd0;
@@ -420,16 +433,20 @@ void main() {
       dens = diskSample(mp, deltaLoc, gGravLoc, emitLoc, inNow);
       float dSig = dens * uDiskOpacity * ds;
       if (dens > 0.0) {
-        L += trans * emitLoc * ds;
+        // Integrate constant emission/absorption analytically over this step.
+        // This avoids over-bright slabs when quality changes the step length.
+        float absorbed = 1.0 - exp(-dSig);
+        L += trans * emitLoc * absorbed / max(dens * uDiskOpacity, 1e-6);
         sigma += dSig;
         trans *= exp(-dSig);
         deltaLast = deltaLoc;
         gGravLast = gGravLoc;
         densLast = dens;
         if (inNow && !inDisk) crossings++;
-        inDisk = inNow;
       }
     }
+
+    inDisk = inNow;
 
     r = nr; th = nth; ph = nph; rdv = nrd; thdv = nthd; phdv = nphd;
 

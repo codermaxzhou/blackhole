@@ -178,7 +178,10 @@ async function boot() {
   camera.lookAt(controls.target);
   if (state.preset === 'cine') cinematic = true;
 
+  pipeline.tier = state.quality;
   resizeWindow();
+  syncAllUniforms();
+  hudRoot.hidden = !state.hud;
 
   hud = new Hud(hudRoot);
   panel = new Panel(document.getElementById('panel'), {
@@ -375,6 +378,8 @@ function animate() {
 function doScreenshot(cb) {
   requestAnimationFrame(() => {
     try {
+      // Read immediately after rendering; the drawing buffer is not preserved.
+      pipeline.renderFrame(camera, simTime, state.debug);
       cb(canvas.toDataURL('image/png'));
     } catch (err) {
       console.error('[GARGANTUA] screenshot failed:', err);

@@ -189,6 +189,7 @@ function radialProfile(png, rings = 8) {
   return out;
 }
 let failures = 0;
+if (results.consoleErrors.length) { failures++; console.log('FAIL: console errors present'); }
 if (results.pageErrors.length) { failures++; console.log('FAIL: page errors present'); }
 for (const s of results.shots) {
   const hasContent = s.nonBlackFrac !== undefined && s.nonBlackFrac > 0.05 && s.avgLum > 2;

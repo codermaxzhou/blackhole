@@ -43,7 +43,11 @@ unavailable.
   potential well is dimmer/redder). Both are toggleable per-parameter.
 - **Deep-space background** — procedural starfield, a galactic band, and dust
   lanes, all lensed by the hole.
-- **Post** — HDR bloom (multi-tap gaussian), ACES tonemapping, subtle
+- **Disk appearance** — seamless advected filaments, a warm outer disk and
+  cooler bright inner emission. A 0.32× artistic visible-band temperature mapping
+  controls the palette; intensity still uses the unscaled temperature. Analytic
+  per-step emission/absorption reduces brightness changes between quality tiers.
+- **Post** — soft-knee HDR bloom (multi-tap gaussian), ACES tonemapping, subtle
   chromatic aberration, vignette, film grain, and dither.
 
 ## Controls
@@ -188,7 +192,15 @@ npm i && npx playwright install chromium
 node visual.mjs
 ```
 
-Screenshots land in `tests/out/` (plus `results.json`). The last run produced
+For black-level and HDR/sRGB GPU regression checks, plus all presets and quality tiers:
+
+```sh
+node tools/visual-test/render-regression.mjs
+```
+
+Regression screenshots land in `/tmp/blackhole-regression/`.
+
+Screenshots from the full visual suite land in `tests/out/` (plus `results.json`). The last run produced
 **zero console errors, zero page errors**, all views rendering with the
 expected structure, and passing shot/persistence checks.
 
