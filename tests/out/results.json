@@ -1,0 +1,253 @@
+{
+  "consoleErrors": [],
+  "pageErrors": [],
+  "shots": [
+    {
+      "name": "01_main_high",
+      "fps": 42,
+      "resolution": [
+        998,
+        562
+      ],
+      "tier": "high",
+      "steps": 340,
+      "debug": 0,
+      "time": 4.659299999997017,
+      "w": 1280,
+      "h": 720,
+      "nonBlackFrac": 0.8599,
+      "avgLum": 138.19
+    },
+    {
+      "name": "02_preset_pole",
+      "fps": 80,
+      "resolution": [
+        998,
+        562
+      ],
+      "tier": "high",
+      "steps": 340,
+      "debug": 0,
+      "time": 4.428200000002979,
+      "w": 1280,
+      "h": 720,
+      "nonBlackFrac": 0.6245,
+      "avgLum": 76.95
+    },
+    {
+      "name": "02_preset_edge",
+      "fps": 84,
+      "resolution": [
+        998,
+        562
+      ],
+      "tier": "high",
+      "steps": 340,
+      "debug": 0,
+      "time": 4.330899999991059,
+      "w": 1280,
+      "h": 720,
+      "nonBlackFrac": 1,
+      "avgLum": 104.21
+    },
+    {
+      "name": "02_preset_cine",
+      "fps": 95,
+      "resolution": [
+        998,
+        562
+      ],
+      "tier": "high",
+      "steps": 340,
+      "debug": 0,
+      "time": 4.3285,
+      "w": 1280,
+      "h": 720,
+      "nonBlackFrac": 1,
+      "avgLum": 90.68
+    },
+    {
+      "name": "03_main_standard",
+      "fps": 85,
+      "resolution": [
+        998,
+        562
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 0,
+      "time": 4.3305,
+      "w": 1280,
+      "h": 720,
+      "nonBlackFrac": 0.8623,
+      "avgLum": 138.27
+    },
+    {
+      "name": "04_main_cinematic",
+      "fps": 52,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "cinematic",
+      "steps": 512,
+      "debug": 0,
+      "time": 5.1134000000059565,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 0.8777,
+      "avgLum": 140.74
+    },
+    {
+      "name": "05_debug_1",
+      "fps": 61,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 1,
+      "time": 4.609499999999999,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 186.87
+    },
+    {
+      "name": "05_debug_2",
+      "fps": 82,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 2,
+      "time": 4.6082999999970164,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 0.7859,
+      "avgLum": 50.33
+    },
+    {
+      "name": "05_debug_3",
+      "fps": 81,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 3,
+      "time": 4.612099999994038,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 0.7424,
+      "avgLum": 119.56
+    },
+    {
+      "name": "05_debug_4",
+      "fps": 66,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 4,
+      "time": 4.613999999999997,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 155.58
+    },
+    {
+      "name": "05_debug_5",
+      "fps": 72,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 5,
+      "time": 4.612700000002978,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 221.23
+    },
+    {
+      "name": "05_debug_6",
+      "fps": 83,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 6,
+      "time": 4.610499999999997,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 165.72
+    },
+    {
+      "name": "05_debug_7",
+      "fps": 27,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 7,
+      "time": 7.871999999999995,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 54.12
+    },
+    {
+      "name": "05_debug_8",
+      "fps": 85,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 8,
+      "time": 4.357200000002979,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 1,
+      "avgLum": 163.8
+    },
+    {
+      "name": "05_debug_9",
+      "fps": 74,
+      "resolution": [
+        749,
+        421
+      ],
+      "tier": "standard",
+      "steps": 220,
+      "debug": 9,
+      "time": 4.610999999999998,
+      "w": 960,
+      "h": 540,
+      "nonBlackFrac": 0.6657,
+      "avgLum": 138.44
+    }
+  ],
+  "urlShot": {
+    "ok": true,
+    "len": 1358250
+  },
+  "persistence": {
+    "afterReload": 8
+  }
+}

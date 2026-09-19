@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>GARGANTUA — Schwarzschild Black Hole Raytracer</title>
+<meta name="description" content="Real-time full-screen Schwarzschild black hole raytracer: null geodesic integration, volumetric accretion disk, gravitational lensing, Doppler beaming. Three.js + GLSL, no build step." />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="stylesheet" href="css/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+  <canvas id="gl" aria-label="Schwarzschild black hole raytracer viewport"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-block hud-tl" id="hud-tl">
+      <div class="hud-title">GARGANTUA</div>
+      <div class="hud-sub">SCHWARZSCHILD BLACK HOLE RAYTRACER</div>
+      <div class="hud-data" id="hud-data">FPS —</div>
+      <div class="hud-data" id="hud-cam">CAM —</div>
+      <div class="hud-data" id="hud-mode">MODE —</div>
+    </div>
+
+    <div class="hud-block hud-br" id="hud-br">
+      <button id="btn-tier"  class="hud-btn" title="Cycle quality tier [ ]">TIER</button>
+      <button id="btn-view"  class="hud-btn" title="Cycle view preset [Q][W][E][T]">VIEW</button>
+      <button id="btn-audio" class="hud-btn" title="Toggle ambient audio [M]">SOUND OFF</button>
+      <button id="btn-shot"  class="hud-btn" title="Download PNG screenshot [S]">SHOT</button>
+      <button id="btn-panel" class="hud-btn" title="Parameter panel [D]">PARAMS</button>
+    </div>
+
+    <div class="hud-block hud-help" id="hud-help">
+      <div class="help-row"><b>0–9</b> debug views</div>
+      <div class="help-row"><b>Q W E T</b> presets · <b>C</b> cinematic</div>
+      <div class="help-row"><b>Space</b> pause · <b>M</b> audio · <b>H</b> HUD</div>
+      <div class="help-row"><b>D</b> params · <b>[ ]</b> quality · <b>S</b> shot · <b>F</b> fullscreen</div>
+      <div class="help-row"><b>R</b> reset params · drag / scroll to orbit</div>
+    </div>
+  </div>
+
+  <!-- parameter panel -->
+  <div id="panel" aria-hidden="true"></div>
+
+  <!-- toasts -->
+  <div id="toasts"></div>
+
+  <!-- loading overlay -->
+  <div id="loading">
+    <div class="load-title">GARGANTUA</div>
+    <div class="load-sub">compiling Schwarzschild geodesic integrator…</div>
+    <div class="load-bar"><div class="load-bar-fill"></div></div>
+  </div>
+
+  <!-- fatal error card -->
+  <div id="error-card" hidden>
+    <div class="error-box">
+      <div class="error-title">RENDERER UNAVAILABLE</div>
+      <div id="error-msg">WebGL2 is not available.</div>
+      <div id="error-detail" class="error-detail"></div>
+      <button id="error-retry" onclick="location.reload()">Retry</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
